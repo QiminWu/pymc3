@@ -4,12 +4,15 @@
 import warnings
 
 from .dist_math import *
+from . import ChiSquared, Normal
+from .. import Deterministic
 
 import numpy as np
+import scipy
 from . import transforms
 
 from theano.tensor.nlinalg import det, matrix_inverse, trace, eigh
-from theano.tensor import dot, cast, eye, diag, eq, le, ge, gt, all
+from theano.tensor import dot, cast, eye, diag, eq, le, ge, gt, all, zeros, sqrt, set_subtensor
 from theano.printing import Print
 from pymc3.distributions.distribution import draw_values, generate_samples
 import scipy.stats as st
@@ -270,18 +273,18 @@ def WishartBartlett(name, S, nu, is_cholesky=False, return_cholesky=False):
     tril_idx = np.tril_indices_from(S, k=-1)
     n_diag = len(diag_idx[0])
     n_tril = len(tril_idx[0])
-    c = T.sqrt(pm.ChiSquared('c', nu - np.arange(2, 2+n_diag), shape=n_diag))
-    z = pm.Normal('z', 0, 1, shape=n_tril)
+    c = sqrt(ChiSquared('c', nu - np.arange(2, 2+n_diag), shape=n_diag))
+    z = Normal('z', 0, 1, shape=n_tril)
     # Construct A matrix
-    A = T.zeros(S.shape, dtype=np.float32)
-    A = T.set_subtensor(A[diag_idx], c)
-    A = T.set_subtensor(A[tril_idx], z)
+    A = zeros(S.shape, dtype=np.float32)
+    A = set_subtensor(A[diag_idx], c)
+    A = set_subtensor(A[tril_idx], z)
 
     # L * A * A.T * L.T ~ Wishart(L*L.T, nu)
     if return_cholesky:
-        return pm.Deterministic(name, T.dot(L, A))
+        return Deterministic(name, dot(L, A))
     else:
-        return pm.Deterministic(name, T.dot(T.dot(T.dot(L, A), A.T), L.T))
+        return Deterministic(name, dot(dot(dot(L, A), A.T), L.T))
 
 
 class LKJCorr(Continuous):

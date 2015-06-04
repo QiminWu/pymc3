@@ -34,6 +34,15 @@ with pm.Model() as model:
 
     start = pm.find_MAP()
     step = pm.NUTS(scaling=start)
-    trace = pm.sample(500, step)
 
-pm.traceplot(trace[100:]);
+
+def run(n = 3000):
+    if n == "short":
+        n = 50
+    with model:
+        trace = sample(n, step, start)
+
+    pm.traceplot(trace);
+
+if __name__ == '__main__':
+    run()

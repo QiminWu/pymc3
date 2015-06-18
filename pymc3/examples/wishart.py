@@ -40,7 +40,7 @@ def run(n = 3000):
     if n == "short":
         n = 50
     with model:
-        trace = sample(n, step, start)
+        trace = pm.sample(n, step, start)
 
     pm.traceplot(trace);
 
